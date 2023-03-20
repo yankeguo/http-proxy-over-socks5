@@ -49,27 +49,26 @@ func handleProxyConnect(dialer proxy.ContextDialer, rw http.ResponseWriter, req 
 		return
 	}
 
-	// seems 200 should send before Hijack()
-	rw.WriteHeader(200)
-
 	// hijack
-	conn, bio, err := hijacker.Hijack()
+	conn, _, err := hijacker.Hijack()
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer conn.Close()
 
+	conn.Write([]byte("HTTP/1.0 200 Connection established\r\n\r\n"))
+
 	// bi-directional copy
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		_, _ = io.Copy(sconn, bio)
+		_, _ = io.Copy(sconn, conn)
 	}()
 	go func() {
 		defer wg.Done()
-		_, _ = io.Copy(bio, sconn)
+		_, _ = io.Copy(conn, sconn)
 	}()
 	wg.Wait()
 }
