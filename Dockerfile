@@ -5,7 +5,7 @@ ADD . .
 RUN go build -o /http-proxy-over-socks5
 
 FROM alpine:3.17
-RUN apk add --no-cache tini
+RUN apk add --no-cache tini ca-certificates
 COPY --from=builder /http-proxy-over-socks5 /http-proxy-over-socks5
 ENTRYPOINT ["tini", "--"]
 CMD ["/http-proxy-over-socks5"]

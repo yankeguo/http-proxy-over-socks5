@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/base64"
-	"flag"
 	"github.com/guoyk93/rg"
 	"golang.org/x/net/proxy"
 	"io"
@@ -108,18 +107,23 @@ func main() {
 	defer rg.Guard(&err)
 
 	var (
-		optListen string
-		optServer string
+		optListen   = strings.TrimSpace(os.Getenv("PROXY_LISTEN"))
+		optUsername = strings.TrimSpace(os.Getenv("PROXY_USERNAME"))
+		optPassword = strings.TrimSpace(os.Getenv("PROXY_PASSWORD"))
+		optTLSKey   = strings.TrimSpace(os.Getenv("PROXY_TLS_KEY"))
+		optTLSCrt   = strings.TrimSpace(os.Getenv("PROXY_TLS_CRT"))
 
-		optProxyUsername    = strings.TrimSpace(os.Getenv("PROXY_USERNAME"))
-		optProxyPassword    = strings.TrimSpace(os.Getenv("PROXY_PASSWORD"))
+		optUpstreamAddr     = strings.TrimSpace(os.Getenv("UPSTREAM_ADDR"))
 		optUpstreamUsername = strings.TrimSpace(os.Getenv("UPSTREAM_USERNAME"))
 		optUpstreamPassword = strings.TrimSpace(os.Getenv("UPSTREAM_PASSWORD"))
 	)
 
-	flag.StringVar(&optListen, "l", ":1087", "address to listen on")
-	flag.StringVar(&optServer, "s", "127.0.0.1:1080", "upstream socks server to connect to")
-	flag.Parse()
+	if optListen == "" {
+		optListen = ":1087"
+	}
+	if optUpstreamAddr == "" {
+		optUpstreamAddr = "127.0.0.1:1080"
+	}
 
 	var upstreamAuth *proxy.Auth
 
@@ -130,7 +134,7 @@ func main() {
 		}
 	}
 
-	upstreamDialer := rg.Must(proxy.SOCKS5("tcp", optServer, upstreamAuth, proxy.Direct)).(proxy.ContextDialer)
+	upstreamDialer := rg.Must(proxy.SOCKS5("tcp", optUpstreamAddr, upstreamAuth, proxy.Direct)).(proxy.ContextDialer)
 
 	upstreamClient := &http.Client{
 		Transport: &http.Transport{
@@ -150,8 +154,8 @@ func main() {
 		Addr: optListen,
 		Handler: http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			// check basic auth
-			if optProxyUsername != "" && optProxyPassword != "" {
-				if username, password, ok := extractProxyBasicAuth(req); !ok || username != optProxyUsername || password != optProxyPassword {
+			if optUsername != "" && optPassword != "" {
+				if username, password, ok := extractProxyBasicAuth(req); !ok || username != optUsername || password != optPassword {
 					http.Error(rw, "invalid basic auth", http.StatusForbidden)
 					return
 				}
@@ -170,8 +174,12 @@ func main() {
 	signal.Notify(chSig, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		log.Println("starting", optListen, "->", optServer)
-		chErr <- s.ListenAndServe()
+		log.Println("starting", optListen, "->", optUpstreamAddr)
+		if optTLSCrt == "" || optTLSKey == "" {
+			chErr <- s.ListenAndServe()
+		} else {
+			chErr <- s.ListenAndServeTLS(optTLSCrt, optTLSKey)
+		}
 	}()
 
 	select {
