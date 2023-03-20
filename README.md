@@ -1,4 +1,4 @@
-# http-over-socks
+# http-proxy-over-socks5
 
 convert a socks5 server to http proxy server
 

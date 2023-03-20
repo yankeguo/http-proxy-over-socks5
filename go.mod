@@ -1,4 +1,4 @@
-module github.com/guoyk93/http-over-socks
+module github.com/guoyk93/http-proxy-over-socks5
 
 go 1.20
 

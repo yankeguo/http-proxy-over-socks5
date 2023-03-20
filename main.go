@@ -170,6 +170,7 @@ func main() {
 	signal.Notify(chSig, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
+		log.Println("starting", optListen, "->", optServer)
 		chErr <- s.ListenAndServe()
 	}()
 
