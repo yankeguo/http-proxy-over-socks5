@@ -4,7 +4,7 @@ WORKDIR /go/src/app
 ADD . .
 RUN go build -o /http-proxy-over-socks5
 
-FROM alpine:3.17
+FROM alpine:3.18
 RUN apk add --no-cache tini ca-certificates
 COPY --from=builder /http-proxy-over-socks5 /http-proxy-over-socks5
 ENTRYPOINT ["tini", "--"]

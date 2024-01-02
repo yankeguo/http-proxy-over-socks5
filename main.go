@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"encoding/base64"
-	"github.com/guoyk93/rg"
-	"golang.org/x/net/proxy"
 	"io"
 	"log"
 	"net"
@@ -15,6 +13,9 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/yankeguo/rg"
+	"golang.org/x/net/proxy"
 )
 
 func extractProxyBasicAuth(req *http.Request) (username, password string, ok bool) {

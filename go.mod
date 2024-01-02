@@ -1,8 +1,8 @@
-module github.com/guoyk93/http-proxy-over-socks5
+module github.com/yankeguo/http-proxy-over-socks5
 
 go 1.20
 
 require (
-	github.com/guoyk93/rg v1.0.0
-	golang.org/x/net v0.8.0
+	github.com/yankeguo/rg v1.1.0
+	golang.org/x/net v0.19.0
 )
